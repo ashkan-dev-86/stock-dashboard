@@ -1,0 +1,4 @@
+<div class="grid">
+    <app-stock-card *ngFor="let stock of stocks$ | async" [stock]="stock" (togglePressed)="onToggle($event)">
+    </app-stock-card>
+</div>

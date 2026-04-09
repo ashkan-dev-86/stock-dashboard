@@ -1,0 +1,50 @@
+<div class="stock-card" [ngClass]="{
+           'green': stock.isActive && stock.direction === 'up',
+           'red': stock.isActive && stock.direction === 'down',
+           'grey': !stock.isActive
+         }">
+
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div class="ticker">{{ stock.symbol }}</div>
+        <div class="name">{{ stock.name }}</div>
+
+        <div class="price">
+            ${{ stock.currentPrice | number:'1.2-2' }}
+        </div>
+    </div>
+
+    <div class="data-grid">
+        <div class="data-item">
+            <span class="data-label">Daily High</span>
+            <span class="data-value">${{ stock.dailyHigh | number:'1.2-2' }}</span>
+        </div>
+        <div class="data-item">
+            <span class="data-label">Daily Low</span>
+            <span class="data-value">${{ stock.dailyLow | number:'1.2-2' }}</span>
+        </div>
+
+        <!-- Desktop only -->
+        <div class="data-item desktop-only">
+            <span class="data-label">52-Week High</span>
+            <span class="data-value">${{ stock.fiftyTwoWeekHigh | number:'1.2-2' }}</span>
+        </div>
+        <div class="data-item desktop-only">
+            <span class="data-label">52-Week Low</span>
+            <span class="data-value">${{ stock.fiftyTwoWeekLow | number:'1.2-2' }}</span>
+        </div>
+    </div>
+
+    <div class="toggle-container">
+        <label class="switch">
+            <input type="checkbox" [checked]="stock.isActive" (change)="togglePressed.emit(stock.symbol)">
+            <span class="slider">
+                <span class="on-text">ON</span>
+                <span class="off-text">OFF</span>
+            </span>
+        </label>
+    </div>
+
+    <div class="last-trade">
+        Last trade • {{ stock.lastUpdated }}
+    </div>
+</div>
