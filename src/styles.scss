@@ -1,1 +1,229 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+
+:root {
+    --green: #22c55e;
+    --red: #ef4444;
+    --grey: #e5e7eb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system_ui, sans-serif;
+}
+
+.app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.25rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #111827;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+}
+
+.stock-card {
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+}
+
+.stock-card.green {
+    background: linear-gradient(145deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.stock-card.red {
+    background: linear-gradient(145deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.stock-card.grey {
+    background: #f8fafc;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+}
+
+.ticker {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+
+.name {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.price {
+    font-size: 2.75rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+    line-height: 1;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: auto;
+}
+
+.data-item {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+}
+
+.stock-card.grey .data-item {
+    background: #f1f5f9;
+}
+
+.data-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.75;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.data-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.desktop-only {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .desktop-only {
+        display: block;
+    }
+}
+
+.toggle-container {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 92px;
+    height: 42px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stock-card.green .switch,
+.stock-card.red .switch {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 34px;
+    height: 34px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.switch input:checked+.slider {
+    transform: translateX(48px);
+    background: #22c55e;
+}
+
+.switch .on-text,
+.switch .off-text {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.switch .on-text {
+    left: 14px;
+    color: #fff;
+    opacity: 0;
+}
+
+.switch .off-text {
+    right: 14px;
+    color: #64748b;
+}
+
+.switch input:checked+.slider .on-text {
+    opacity: 1;
+}
+
+.switch input:checked+.slider .off-text {
+    opacity: 0;
+}
+
+.last-trade {
+    font-size: 0.75rem;
+    opacity: 0.75;
+    margin-top: 1rem;
+    text-align: right;
+}
+
+.footer-note {
+    text-align: center;
+    margin-top: 3rem;
+    font-size: 0.875rem;
+    color: #64748b;
+}
