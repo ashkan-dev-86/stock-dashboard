@@ -88,15 +88,17 @@
     }
 }
 
-.toggle-container {
-    margin-top: auto;
+.bottom-container {
+    margin-top: 10px;
     display: flex;
-    justify-content: flex-end;
+    gap: 60px;
 }
 
 .switch {
     position: relative;
     display: inline-flex;
+    justify-content: flex-start;
+    flex: 0 1 auto;
     align-items: center;
     width: 92px;
     height: 42px;
@@ -142,6 +144,7 @@
 
 .switch .on-text,
 .switch .off-text {
+    align-items: center;
     position: absolute;
     font-size: 11px;
     font-weight: 700;
@@ -150,13 +153,11 @@
 }
 
 .switch .on-text {
-    left: 14px;
     color: #fff;
     opacity: 0;
 }
 
 .switch .off-text {
-    right: 14px;
     color: #64748b;
 }
 
@@ -169,8 +170,8 @@
 }
 
 .last-trade {
+    flex: 0 0 auto;
     font-size: 0.75rem;
     opacity: 0.75;
-    margin-top: 1rem;
-    text-align: right;
+    margin-top: 10px;
 }

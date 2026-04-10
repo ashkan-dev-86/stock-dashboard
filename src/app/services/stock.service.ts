@@ -12,48 +12,15 @@ export class StockService extends SubscriptionBase implements OnDestroy {
   private readonly symbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA'];
   private readonly stocks: string[] = ['Apple Inc.', 'Alphabet Inc.', 'Microsoft Corporation', 'Tesla, Inc.'];
   private readonly BASE_URL = 'https://finnhub.io/api/v1';
-  private readonly API_KEY = 'd7btmopr01quh9fbnt2gd7btmopr01quh9fbnt30';
+  private readonly FINNHUB_API_KEY = 'd7btmopr01quh9fbnt2gd7btmopr01quh9fbnt30';
+  private readonly MASSIVE_API_KEY = '6aO9LWfZ3C5JDFiW1_1Q1VpwXbhtrHNC';
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private socket$!: WebSocketSubject<any>;
-  private stocksSubject = new BehaviorSubject<IStock[]>([
-    // {
-    //   symbol: 'AAPL',
-    //   name: 'Apple Inc.',
-    //   dailyHigh: 0,
-    //   dailyLow: 0,
-    //   isActive: true,
-    //   direction: 'neutral',
-    //   lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    // },
-    // {
-    //   symbol: 'GOOGL',
-    //   name: 'Alphabet Inc.',
-    //   dailyHigh: 0,
-    //   dailyLow: 0,
-    //   isActive: true,
-    //   direction: 'neutral',
-    //   lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    // },
-    // {
-    //   symbol: 'MSFT',
-    //   name: 'Microsoft Corporation',
-    //   dailyHigh: 0,
-    //   dailyLow: 0,
-    //   isActive: true,
-    //   direction: 'neutral',
-    //   lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    // },
-    // {
-    //   symbol: 'TSLA',
-    //   name: 'Tesla, Inc.',
-    //   dailyHigh: 0,
-    //   dailyLow: 0,
-    //   isActive: true,
-    //   direction: 'neutral',
-    //   lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    // }
-  ]);
+  private stocksSubject = new BehaviorSubject<IStock[]>([]);
+  private lastYearInterval: number;
+  private symbolsLastYearLow = Array(this.symbols.length).fill(0);
+  private symbolsLastYearHigh = Array(this.symbols.length).fill(0);
 
   public stocks$: Observable<IStock[]> = this.stocksSubject.asObservable();
 
@@ -61,56 +28,125 @@ export class StockService extends SubscriptionBase implements OnDestroy {
     private http: HttpClient
   ) {
     super();
-    this.fetchInitialQuotes();
+
+    this.lastYearInterval = setInterval(() => {
+      this.updateYearlyPrices();
+    }, (24 * 60 * 60 * 1000)); // Update every 24 hours
+
+    this.initValues();
     this.connectWebSocket();
   }
 
   ngOnDestroy(): void {
+    clearInterval(this.lastYearInterval);
     this.destroySubs();
   }
 
-  private fetchInitialQuotes(): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getYearlyPrices(): Observable<any[]> {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    const from = oneYearAgo.toISOString().split('T')[0];
+    const to = new Date().toISOString().split('T')[0];
+
     const quoteRequests = this.symbols.map(symbol =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.http.get<any>(
-        `${this.BASE_URL}/quote?symbol=${symbol}&token=${this.API_KEY}`
+        `https://api.massive.com/v2/aggs/ticker/${symbol}/range/1/day/${from}/${to}?adjusted=true&sort=asc&limit=50000&apiKey=${this.MASSIVE_API_KEY}`
       )
     );
-    
-    forkJoin(quoteRequests).subscribe({
-      next: (responses) => {
-        const currentMap: IStock[] = [];
 
-        responses.forEach((quote, index) => {
-          const symbol = this.symbols[index];
-          if (quote && typeof quote.c === 'number') {
-            const stock: IStock = {
-              symbol,
-              name: this.stocks[index].charAt(0).toUpperCase() + this.stocks[index].slice(1),
-              currentPrice: quote.p,
-              dailyHigh: quote.p,
-              dailyLow: quote.p,
-              fiftyTwoWeekHigh: quote.p,
-              fiftyTwoWeekLow: quote.p,
-              isActive: true,
-              direction: 'neutral',
-              lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            };
-            currentMap.push(stock);
-          }
+    return forkJoin(quoteRequests);
+  }
+
+
+  private updateYearlyPrices(): void {
+    this.getYearlyPrices().subscribe({
+      next: async (yearlyPrices) => {
+        await this.updateYearlyHighLow(yearlyPrices);
+        const currentStocks: IStock[] = this.stocksSubject.value;
+        this.symbols.map((symbol: string, index: number) => {
+          currentStocks.filter(s => s.symbol === symbol).map(stock => {
+            stock.fiftyTwoWeekHigh = this.symbolsLastYearHigh[index];
+            stock.fiftyTwoWeekLow = this.symbolsLastYearLow[index];
+          });
         });
-
-        this.stocksSubject.next(currentMap);
-        console.log('✅ Initial stock quotes loaded from REST API');
-      },
-      error: (err) => {
-        console.error('❌ Failed to fetch initial quotes:', err);
+        this.stocksSubject.next(currentStocks);
+        console.log('✅ Yearly high/low updated');
       }
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private fetchInitialQuotes(): Observable<any[]> {
+    const quoteRequests = this.symbols.map(symbol =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.http.get<any>(
+        `${this.BASE_URL}/quote?symbol=${symbol}&token=${this.FINNHUB_API_KEY}`
+      )
+    );
+
+    return forkJoin(quoteRequests);
+  }
+
+  private initValues(): void {
+    forkJoin([this.getYearlyPrices(), this.fetchInitialQuotes()]).subscribe({
+      next: async ([yearlyPrices, initialData]) => {
+        await this.updateYearlyHighLow(yearlyPrices);
+        this.initializeStocks(initialData);
+      },
+      error: (err) => console.error('Error fetching data', err)
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async updateYearlyHighLow(yearlyPrices: any): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    yearlyPrices.forEach((data: { results: any[]; }, index: number) => {
+      if (!data.results || data.results.length === 0) {
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const highs = data.results.map((d: any) => d.h);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const lows = data.results.map((d: any) => d.l);
+      this.symbolsLastYearHigh[index] = Math.max(...highs);
+      this.symbolsLastYearLow[index] = Math.min(...lows);
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private initializeStocks(responses: any): void {
+    const currentMap: IStock[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    responses.forEach((quote: any, index: number) => {
+      const symbol = this.symbols[index];
+      if (quote && typeof quote.c === 'number') {
+        const stock: IStock = {
+          symbol,
+          name: this.stocks[index].charAt(0).toUpperCase() + this.stocks[index].slice(1),
+          currentPrice: quote.c,
+          dailyHigh: quote.h,
+          dailyLow: quote.l,
+          fiftyTwoWeekHigh: this.symbolsLastYearHigh[index],
+          fiftyTwoWeekLow: this.symbolsLastYearLow[index],
+          isActive: true,
+          direction: 'neutral',
+          lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+        currentMap.push(stock);
+      }
+    });
+
+    this.stocksSubject.next(currentMap);
+    console.log('✅ Initial stock quotes loaded from REST API');
+  }
+
   private connectWebSocket(): void {
-    const url = `wss://ws.finnhub.io?token=${this.API_KEY}`;
+    const url = `wss://ws.finnhub.io?token=${this.FINNHUB_API_KEY}`;
     this.socket$ = webSocket({
       url,
       openObserver: {
@@ -167,8 +203,8 @@ export class StockService extends SubscriptionBase implements OnDestroy {
           currentPrice: trade.p,
           dailyHigh: Math.max((symbol?.dailyHigh ?? 0), trade.p),
           dailyLow: Math.min((symbol?.dailyLow || trade.p), trade.p),
-          fiftyTwoWeekHigh: Math.max((symbol?.fiftyTwoWeekHigh ?? 0), trade.p),
-          fiftyTwoWeekLow: Math.min((symbol?.fiftyTwoWeekLow || trade.p), trade.p),
+          fiftyTwoWeekHigh: this.symbolsLastYearHigh[this.symbols.indexOf(trade.s)] || trade.p,
+          fiftyTwoWeekLow: this.symbolsLastYearLow[this.symbols.indexOf(trade.s)] || trade.p,
           direction,
           lastUpdated: new Date(trade.t).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         };

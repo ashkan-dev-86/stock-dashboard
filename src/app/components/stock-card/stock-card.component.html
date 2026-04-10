@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <div class="toggle-container">
+    <div class="bottom-container">
         <label class="switch">
             <input type="checkbox" [checked]="stock.isActive" (change)="togglePressed.emit(stock.symbol)">
             <span class="slider">
@@ -42,9 +42,9 @@
                 <span class="off-text">OFF</span>
             </span>
         </label>
-    </div>
 
-    <div class="last-trade">
-        Last trade • {{ stock.lastUpdated }}
+        <div class="last-trade">
+            Last trade • {{ stock.lastUpdated }}
+        </div>
     </div>
 </div>
