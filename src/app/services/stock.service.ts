@@ -203,8 +203,6 @@ export class StockService extends SubscriptionBase implements OnDestroy {
           currentPrice: trade.p,
           dailyHigh: Math.max((symbol?.dailyHigh ?? 0), trade.p),
           dailyLow: Math.min((symbol?.dailyLow || trade.p), trade.p),
-          fiftyTwoWeekHigh: this.symbolsLastYearHigh[this.symbols.indexOf(trade.s)] || trade.p,
-          fiftyTwoWeekLow: this.symbolsLastYearLow[this.symbols.indexOf(trade.s)] || trade.p,
           direction,
           lastUpdated: new Date(trade.t).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         };
